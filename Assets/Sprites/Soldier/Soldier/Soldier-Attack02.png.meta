@@ -52,7 +52,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -90,7 +90,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -285,7 +285,13 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Soldier-Attack02_0: 4811190364059900513
+      Soldier-Attack02_1: -3630134925126372854
+      Soldier-Attack02_2: -3996107768381173192
+      Soldier-Attack02_3: 8152592829446542042
+      Soldier-Attack02_4: 4949258004858939775
+      Soldier-Attack02_5: -8030318945529727460
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
