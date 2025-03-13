@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PauseManager : MonoBehaviour
 {
@@ -44,5 +45,12 @@ public class PauseManager : MonoBehaviour
         playerMovement.enabled = true; //Returns movement when player menu is active.
         pauseMenu.SetActive(false);
         // Add UI or other unpause logic here (e.g., hide pause menu)
+    }
+
+    public void MainMenu() //Main Menu button in pause menu will change scene to the main menu
+    {
+        SceneManager.LoadScene("Main Menu"); //Sends player back to the main menu
+        Time.timeScale = 1; //Resumes time
+        playerMovement.enabled = true;//Returns movement
     }
 }
