@@ -27,6 +27,7 @@ public class PlayerHealth : MonoBehaviour
         if (isInvincible || isDead) return;
         
         currentHealth -= amount;
+        Debug.Log("Player took damage! Health: " + currentHealth + "/" + maxHealth);
         
         if (currentHealth <= 0)
         {
@@ -61,15 +62,27 @@ public class PlayerHealth : MonoBehaviour
     
     private void Die()
     {
+        if (isDead) return; // Prevent multiple death calls
+        
+        Debug.Log("Player died! Restarting level after delay...");
         isDead = true;
         
         // Disable player movement
-        playerMovement.enabled = false;
+        if (playerMovement != null)
+            playerMovement.enabled = false;
+        
+        // Disable player combat
+        var combat = GetComponent<PlayerCombat>();
+        if (combat != null)
+            combat.enabled = false;
         
         // Freeze physics
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
-        rb.linearVelocity = Vector2.zero;
-        rb.bodyType = RigidbodyType2D.Kinematic;
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.bodyType = RigidbodyType2D.Kinematic;
+        }
         
         // Play death animation
         animator.SetTrigger("isDead");
@@ -83,43 +96,17 @@ public class PlayerHealth : MonoBehaviour
         // Wait for death animation to play
         yield return new WaitForSeconds(deathDelay);
         
-        // Show simple game over text
-        ShowGameOverText();
-        
-        // Wait for player to press any key to restart
-        while (!Input.anyKeyDown)
-        {
-            yield return null;
-        }
-        
+        Debug.Log("Restarting level now!");
         RestartLevel();
-    }
-    
-    private void ShowGameOverText()
-    {
-        // Create very simple UI
-        GameObject gameOverObj = new GameObject("GameOverText");
-        gameOverObj.transform.position = Camera.main.transform.position + new Vector3(0, 0, 1);
-        
-        TextMesh textMesh = gameOverObj.AddComponent<TextMesh>();
-        textMesh.text = "GAME OVER\nPress any key to restart";
-        textMesh.fontSize = 24;
-        textMesh.alignment = TextAlignment.Center;
-        textMesh.anchor = TextAnchor.MiddleCenter;
-        textMesh.color = Color.red;
     }
     
     private void RestartLevel()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-    }
-    
-    // Optional: Method for manual restart with R key
-    private void Update()
-    {
-        if (isDead && Input.GetKeyDown(KeyCode.R))
-        {
-            RestartLevel();
-        }
+        // Make sure the current scene is in build settings
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        Debug.Log("Attempting to reload scene: " + currentSceneName);
+        
+        // Reload the current scene
+        SceneManager.LoadScene(currentSceneName);
     }
 }
