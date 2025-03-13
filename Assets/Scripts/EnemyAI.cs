@@ -177,12 +177,6 @@ public class EnemyAI : MonoBehaviour
         // Trigger attack animation
         animator.ResetTrigger("attack");
         animator.SetTrigger("attack");
-        
-        // Deal damage after a delay to match animation
-        Invoke("DealDamage", 0.3f);
-        
-        // End attack after animation
-        Invoke("EndAttack", 0.6f);
     }
     
     private void EndAttack()
