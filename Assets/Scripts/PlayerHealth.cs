@@ -4,9 +4,13 @@ using UnityEngine.SceneManagement;
 
 public class PlayerHealth : MonoBehaviour
 {
+    public HealthBar healthBar;
+
     [SerializeField] private int maxHealth = 3;
     [SerializeField] private float invincibilityDuration = 1f;
     [SerializeField] private float deathDelay = 2f;
+
+    
     
     private int currentHealth;
     private bool isInvincible = false;
@@ -20,6 +24,7 @@ public class PlayerHealth : MonoBehaviour
         animator = GetComponent<Animator>();
         playerMovement = GetComponent<PlayerMovement>();
         currentHealth = maxHealth;
+        healthBar.SetMaxHealth(maxHealth);
     }
     
     public void TakeDamage(int amount)
@@ -27,6 +32,7 @@ public class PlayerHealth : MonoBehaviour
         if (isInvincible || isDead) return;
         
         currentHealth -= amount;
+        healthBar.SetHealth(currentHealth);
         
         if (currentHealth <= 0)
         {
