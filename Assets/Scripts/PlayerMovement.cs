@@ -97,4 +97,9 @@ public class PlayerMovement : MonoBehaviour
             transform.localScale = localScale;
         }
     }
+
+    public float GetSpeed()
+    {
+        return Mathf.Abs(rb.linearVelocity.x);  // Get the horizontal speed (absolute value)
+    }
 }

@@ -9,7 +9,7 @@ public class SceneLoader : MonoBehaviour
     public int rngLevel() //Select a random level to load into when hitting the play button and loading into the next level.
     {
         System.Random rnd = new System.Random();
-        int level = rnd.Next(1,4);
+        int level = rnd.Next(1,3);
         return level;
     }
 
