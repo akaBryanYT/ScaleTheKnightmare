@@ -385,14 +385,14 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 256
-  hasLightAttack: 0
+  hasLightAttack: 1
   lightAttackPoint: {fileID: 3149865967205956470}
   lightAttackRange: 1
   lightAttackDamage: 1
   lightAttackDistance: 2
   lightAttackCooldown: 1
   lightAttackTrigger: lightAttack
-  hasHeavyAttack: 0
+  hasHeavyAttack: 1
   heavyAttackPoint: {fileID: 5361881407734854653}
   heavyAttackRange: 0.7
   heavyAttackDamage: 2

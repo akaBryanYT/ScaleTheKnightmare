@@ -310,8 +310,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 3
-  aggroRange: 8
-  patrolSpeed: 2
+  aggroRange: 20
+  patrolSpeed: 4
   groundCheck: {fileID: 7891285896428261276}
   groundLayer:
     serializedVersion: 2
@@ -344,9 +344,9 @@ MonoBehaviour:
   areaAttackTrigger: areaAttack
   hasProjectileAttack: 1
   projectileSpawnPoint: {fileID: 6431938168647985416}
-  projectilePrefab: {fileID: 0}
+  projectilePrefab: {fileID: 7234629349740835271, guid: 59af4e1012951804e887aa7d5890d7f6, type: 3}
   projectileSpeed: 10
-  minProjectileRange: 3
-  maxProjectileRange: 8
+  minProjectileRange: 0
+  maxProjectileRange: 100
   projectileCooldown: 2
   projectileAttackTrigger: projectileAttack

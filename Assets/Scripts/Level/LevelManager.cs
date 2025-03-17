@@ -92,6 +92,7 @@ public class LevelManager : MonoBehaviour
 		else
 		{
 			isFirstWave = false;
+			yield return new WaitForSeconds(5f);
 		}
         
         if (currentWaveIndex < waves.Length)
@@ -168,9 +169,23 @@ public class LevelManager : MonoBehaviour
         }
     }
     
-    private void OnBossDeath()
-    {
-        Debug.Log("Boss defeated!");
-        StartCoroutine(StartNextWave());
-    }
+	private void OnBossDeath()
+	{
+		Debug.Log("Boss defeated!");
+		
+		// Check if this was the final wave
+		if (currentWaveIndex >= waves.Length)
+		{
+			// All waves complete, level is finished
+			Debug.Log("All waves complete! Level finished!");
+			
+			// Trigger the level complete sequence
+			SceneLoader.OnLevelComplete();
+		}
+		else
+		{
+			// Continue to next wave
+			StartCoroutine(StartNextWave());
+		}
+	}
 }

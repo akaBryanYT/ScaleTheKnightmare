@@ -56,7 +56,7 @@ public class PlayerStats : MonoBehaviour
         // Update combat
         if (playerCombat)
         {
-            // You would need to add these properties to PlayerCombat
+            // We would need to add these properties to PlayerCombat
             // playerCombat.attackRate = ActualAttackSpeed;
             // playerCombat.attackDamage = Mathf.RoundToInt(ActualAttackDamage);
         }
@@ -64,7 +64,7 @@ public class PlayerStats : MonoBehaviour
         // Update health
         if (playerHealth)
         {
-            // You would need to add these properties to PlayerHealth
+            // We would need to add these properties to PlayerHealth
             // playerHealth.maxHealth = Mathf.RoundToInt(ActualMaxHealth);
         }
         

@@ -154,7 +154,7 @@ public class PlayerMovement : MonoBehaviour
         int originalLayer = gameObject.layer;
         
         // Switch to a layer that doesn't collide with platforms
-        // Make sure you set up your Physics2D collision matrix for this!
+        // Make sure we set up your Physics2D collision matrix for this!
         gameObject.layer = LayerMask.NameToLayer("PlayerDropping");
         
         // Set all platform effectors to allow dropping
