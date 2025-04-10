@@ -6,7 +6,7 @@ public class PlayerHealth : MonoBehaviour
 {
 	public HealthBar healthBar;
 	
-    [SerializeField] private int maxHealth = 3;
+    [SerializeField] public int maxHealth = 3;
     [SerializeField] private float invincibilityDuration = 1f;
     [SerializeField] private float deathDelay = 2f;
     

@@ -21,7 +21,7 @@ public class PlayerStats : MonoBehaviour
     // Property to get actual stats
     public float ActualMoveSpeed => moveSpeed * moveSpeedModifier;
     public float ActualAttackSpeed => attackSpeed * attackSpeedModifier;
-    public float ActualAttackDamage => attackDamage * attackDamageModifier;
+    public float ActualAttackDamage => attackDamage + attackDamageModifier;
     public float ActualMaxHealth => maxHealth * maxHealthModifier;
     
     private void Awake()
@@ -58,14 +58,14 @@ public class PlayerStats : MonoBehaviour
         {
             // We would need to add these properties to PlayerCombat
             // playerCombat.attackRate = ActualAttackSpeed;
-            // playerCombat.attackDamage = Mathf.RoundToInt(ActualAttackDamage);
+            playerCombat.attackDamage = Mathf.RoundToInt(ActualAttackDamage);
         }
         
         // Update health
         if (playerHealth)
         {
             // We would need to add these properties to PlayerHealth
-            // playerHealth.maxHealth = Mathf.RoundToInt(ActualMaxHealth);
+            playerHealth.maxHealth = Mathf.RoundToInt(ActualMaxHealth);
         }
         
         Debug.Log("Stats updated - Move Speed: " + ActualMoveSpeed + 

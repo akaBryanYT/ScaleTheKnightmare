@@ -6,7 +6,7 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private Transform attackPoint;
     [SerializeField] private float attackRange = 0.5f;
     [SerializeField] private LayerMask enemyLayers;
-    [SerializeField] private int attackDamage = 1;
+    [SerializeField] public int attackDamage = 1;
     [SerializeField] private float attackCooldown = 0.0f;  // Shorter cooldown
     
     [Header("Attack Speed")]

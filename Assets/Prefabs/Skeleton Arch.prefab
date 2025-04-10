@@ -295,6 +295,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 223e246e4792caf42a911c125fdd4e74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  items:
+  - {fileID: 5853821512452632667, guid: c2a51f90e356fb14980b0bd14740173b, type: 3}
+  - {fileID: 5853821512452632667, guid: c602bae128391164182aa2aad41fb798, type: 3}
+  - {fileID: 5853821512452632667, guid: 91f31f754cb60bc4fa7629833f26b63e, type: 3}
   maxHealth: 3
   knockbackForce: 3
 --- !u!114 &8786412473505719217
