@@ -46,6 +46,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pauseMenu: {fileID: 0}
   player: {fileID: 0}
-  sceneLoader: {fileID: -8226621599704102002, guid: 942e1bb4b0d17aa4fb444d042db33a47, type: 3}
-  audioMixer: {fileID: 24100000, guid: 0467dc4464d052b43aa64eee58f94d78, type: 2}
+  controlMenu: {fileID: 0}
   mainMenuSceneName: Main Menu

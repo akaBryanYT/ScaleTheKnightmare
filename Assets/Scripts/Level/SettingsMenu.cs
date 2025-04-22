@@ -4,11 +4,13 @@ public class SettingsMenu : MonoBehaviour
 {
     public GameObject settingsPanel; // Reference to the settings panel
     public GameObject mainMenuPanel; // Reference to the main menu panel
+    public GameObject controlPanel; //Reference to the control panel
 
     // Function to toggle the settings panel visibility
     void Start()
     {
         settingsPanel.SetActive(false);
+        controlPanel.SetActive(false);
     }
 
     public void ToggleSettingsMenu()
@@ -24,6 +26,13 @@ public class SettingsMenu : MonoBehaviour
         bool isActive = settingsPanel.activeSelf;
         settingsPanel.SetActive(!isActive);
         mainMenuPanel.SetActive(true);
+    }
+
+    public void Controls()
+    {
+        bool isActive = controlPanel.activeSelf;
+        controlPanel.SetActive(!isActive);
+        mainMenuPanel.SetActive(false);
     }
        
     

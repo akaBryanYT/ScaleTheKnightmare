@@ -30,7 +30,9 @@ public class PauseManager : MonoBehaviour
     
     void Start()
     {
+        
         pauseMenu.SetActive(false);
+       
         
         // Make absolutely sure time scale is correct at scene start
         Time.timeScale = 1f;
@@ -40,6 +42,8 @@ public class PauseManager : MonoBehaviour
         {
             player = GameObject.FindGameObjectWithTag("Player");
         }
+
+       
         
         // Cache animators (for pausing animations)
         animators = FindObjectsOfType<Animator>();
@@ -63,6 +67,8 @@ public class PauseManager : MonoBehaviour
                     ResumeGame();
                 }
             }
+
+
         }
     }
     
@@ -95,6 +101,7 @@ public class PauseManager : MonoBehaviour
         
         // Show pause menu
         pauseMenu.SetActive(true);
+       
     }
     
     void ResumeGame()
@@ -125,6 +132,7 @@ public class PauseManager : MonoBehaviour
         
         // Hide pause menu
         pauseMenu.SetActive(false);
+      
     }
     
     public void MainMenu()
@@ -147,4 +155,7 @@ public class PauseManager : MonoBehaviour
         _isPaused = false;
         ResumeGame();
     }
+
+  
+        
 }
