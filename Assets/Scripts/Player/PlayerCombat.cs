@@ -18,7 +18,7 @@ public class PlayerCombat : MonoBehaviour
     
     private float nextAttackTime = 0f;
     private Animator animator;
-    private bool inMeleeMode = true;
+    public bool inMeleeMode = true;
     private PlayerMovement playerMovement;
     private bool isPerformingAttack = false;
     private bool hasDamageOccurred = false;

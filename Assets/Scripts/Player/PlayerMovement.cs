@@ -85,7 +85,7 @@ public class PlayerMovement : MonoBehaviour
             UpdateAnimatorParameters();
         }
         
-        // Handle direction flipping based on cursor position
+        // Handle direction flipping based on cursor position if player is in ranged
         HandleDirectionFlipping();
         
         // Check ceiling collisions
@@ -122,19 +122,16 @@ public class PlayerMovement : MonoBehaviour
     }
     
     private void HandleDirectionFlipping()
+{
+    if (mainCamera == null) return;
+
+    if (playerCombat != null && !playerCombat.inMeleeMode)
     {
-        if (mainCamera == null) return;
-        
-        // Get mouse position in screen space
+        // Ranged mode: face mouse position
         Vector3 mousePos = Input.mousePosition;
-        
-        // Convert to world position
         Vector3 worldMousePos = mainCamera.ScreenToWorldPoint(new Vector3(mousePos.x, mousePos.y, -mainCamera.transform.position.z));
-        
-        // Determine facing direction based on cursor position relative to player
         bool shouldFaceRight = worldMousePos.x > transform.position.x;
-        
-        // Flip if needed
+
         if (shouldFaceRight != isFacingRight)
         {
             isFacingRight = shouldFaceRight;
@@ -143,6 +140,19 @@ public class PlayerMovement : MonoBehaviour
             transform.localScale = localScale;
         }
     }
+    else
+    {
+        // Melee mode: face movement direction
+        if (horizontal > 0 && !isFacingRight)
+        {
+            Flip();
+        }
+        else if (horizontal < 0 && isFacingRight)
+        {
+            Flip();
+        }
+    }
+}
     
     private void HandlePlatformDropping()
     {
