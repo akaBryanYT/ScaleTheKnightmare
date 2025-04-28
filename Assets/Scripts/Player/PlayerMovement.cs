@@ -17,9 +17,9 @@ public class PlayerMovement : MonoBehaviour
     
     // Ceiling check (from CharacterController2D)
     [SerializeField] private Transform ceilingCheck;
-	[SerializeField] private LayerMask ceilingLayer;
+    [SerializeField] private LayerMask ceilingLayer;
     [SerializeField] private float ceilingCheckRadius = 0.2f;
-	
+    
     // Platform dropping
     [SerializeField] private float platformDropDelay = 0.1f;
     private float platformDropTimer = 0f;
@@ -29,6 +29,8 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody2D rb;
     private Animator animator;
     private PlayerCombat playerCombat;
+    private Camera mainCamera;
+    private Collider2D playerCollider;
     
     // State variables
     private float horizontal;
@@ -41,6 +43,8 @@ public class PlayerMovement : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         playerCombat = GetComponent<PlayerCombat>();
+        mainCamera = Camera.main;
+        playerCollider = GetComponent<Collider2D>();
         
         // Create ceiling check if it doesn't exist
         if (ceilingCheck == null)
@@ -53,7 +57,7 @@ public class PlayerMovement : MonoBehaviour
     
     private void Update()
     {
-        // Input handling
+        // Input handling - now only affects movement, not direction
         horizontal = Input.GetAxisRaw("Horizontal");
         targetSpeed = horizontal * speed;
         
@@ -64,9 +68,6 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetButtonDown("Jump") && IsGrounded())
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpingPower);
-            
-            // Reset platform effectors when jumping (to jump through platforms)
-            ResetPlatformEffectors();
         }
         
         // Variable jump height 
@@ -84,11 +85,8 @@ public class PlayerMovement : MonoBehaviour
             UpdateAnimatorParameters();
         }
         
-        // Handle direction flipping - ALWAYS allow flipping when moving
-        if (horizontal != 0)
-        {
-            Flip();
-        }
+        // Handle direction flipping based on cursor position
+        HandleDirectionFlipping();
         
         // Check ceiling collisions
         CheckCeiling();
@@ -123,6 +121,29 @@ public class PlayerMovement : MonoBehaviour
         rb.linearVelocity = new Vector2(currentSpeed * speedMultiplier, rb.linearVelocity.y);
     }
     
+    private void HandleDirectionFlipping()
+    {
+        if (mainCamera == null) return;
+        
+        // Get mouse position in screen space
+        Vector3 mousePos = Input.mousePosition;
+        
+        // Convert to world position
+        Vector3 worldMousePos = mainCamera.ScreenToWorldPoint(new Vector3(mousePos.x, mousePos.y, -mainCamera.transform.position.z));
+        
+        // Determine facing direction based on cursor position relative to player
+        bool shouldFaceRight = worldMousePos.x > transform.position.x;
+        
+        // Flip if needed
+        if (shouldFaceRight != isFacingRight)
+        {
+            isFacingRight = shouldFaceRight;
+            Vector3 localScale = transform.localScale;
+            localScale.x *= -1f;
+            transform.localScale = localScale;
+        }
+    }
+    
     private void HandlePlatformDropping()
     {
         if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))
@@ -150,42 +171,60 @@ public class PlayerMovement : MonoBehaviour
     
     private System.Collections.IEnumerator DropThroughPlatforms()
     {
-        // Save the original layer
-        int originalLayer = gameObject.layer;
+        // Find the platform the player is standing on
+        Collider2D platformCollider = FindCurrentPlatformCollider();
         
-        // Switch to a layer that doesn't collide with platforms
-        // Make sure we set up your Physics2D collision matrix for this!
-        gameObject.layer = LayerMask.NameToLayer("PlayerDropping");
-        
-        // Set all platform effectors to allow dropping
-        SetPlatformEffectors(180f);
-        
-        // Wait a short time to fall through
-        yield return new WaitForSeconds(0.3f);
-        
-        // Reset everything
-        gameObject.layer = originalLayer;
-        ResetPlatformEffectors();
-    }
-    
-    private void SetPlatformEffectors(float rotation)
-    {
-        // Find all platform effectors in the scene
-        PlatformEffector2D[] effectors = FindObjectsByType<PlatformEffector2D>(FindObjectsSortMode.None);
-        foreach (PlatformEffector2D effector in effectors)
+        if (platformCollider != null)
         {
-            effector.rotationalOffset = rotation;
+            // Temporarily ignore collision between player and this specific platform
+            Physics2D.IgnoreCollision(playerCollider, platformCollider, true);
+            
+            // Apply a small downward force to ensure the player drops
+            rb.AddForce(Vector2.down * 5f, ForceMode2D.Impulse);
+            
+            // Wait a short time to fall through
+            yield return new WaitForSeconds(0.3f);
+            
+            // Re-enable collision
+            Physics2D.IgnoreCollision(playerCollider, platformCollider, false);
+        }
+        else
+        {
+            // Fallback method if we can't find the specific platform
+            // Save the original layer
+            int originalLayer = gameObject.layer;
+            
+            // Switch to a layer that doesn't collide with platforms
+            gameObject.layer = LayerMask.NameToLayer("PlayerDropping");
+            
+            // Wait a short time to fall through
+            yield return new WaitForSeconds(0.3f);
+            
+            // Reset player layer
+            gameObject.layer = originalLayer;
         }
     }
     
-    private void ResetPlatformEffectors()
+    private Collider2D FindCurrentPlatformCollider()
     {
-        // Reset all platform effectors
-        PlatformEffector2D[] effectors = FindObjectsByType<PlatformEffector2D>(FindObjectsSortMode.None);
-        foreach (PlatformEffector2D effector in effectors)
+        // Cast a ray downward from the player to find the platform
+        RaycastHit2D hit = Physics2D.Raycast(
+            groundCheck.position, 
+            Vector2.down, 
+            0.1f, 
+            groundLayer
+        );
+        
+        if (hit.collider != null)
         {
-            effector.rotationalOffset = 0f;
+            // Check if this has a platform effector (is a one-way platform)
+            if (hit.collider.GetComponent<PlatformEffector2D>() != null)
+            {
+                return hit.collider;
+            }
         }
+        
+        return null;
     }
     
     private void CheckCeiling()
@@ -233,15 +272,18 @@ public class PlayerMovement : MonoBehaviour
         animator.SetBool("isJumping", !IsGrounded());
     }
     
-    private void Flip()
+    // This method is now only used when needed by other scripts
+    public void Flip()
     {
-        if (isFacingRight && horizontal < 0f || !isFacingRight && horizontal > 0f)
-        {
-            isFacingRight = !isFacingRight;
-            Vector3 localScale = transform.localScale;
-            localScale.x *= -1f;
-            transform.localScale = localScale;
-        }
+        isFacingRight = !isFacingRight;
+        Vector3 localScale = transform.localScale;
+        localScale.x *= -1f;
+        transform.localScale = localScale;
+    }
+    
+    public bool IsFacingRight()
+    {
+        return isFacingRight;
     }
     
     private void OnDrawGizmosSelected()

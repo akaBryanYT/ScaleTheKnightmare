@@ -488,7 +488,7 @@ GameObject:
   - component: {fileID: 386538102}
   m_Layer: 0
   m_Name: MainCamera
-  m_TagString: Untagged
+  m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1022,6 +1022,56 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1183173351
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1183173353}
+  - component: {fileID: 1183173352}
+  m_Layer: 0
+  m_Name: EnemyIndicatorManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1183173352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1183173351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 568354cdbc13fa74ca94ab29c8ee8e50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  arrowIndicatorPrefab: {fileID: 5073389269021981799, guid: c8e1e6c86d7d86a4aa20b26021318284, type: 3}
+  edgeOffset: 20
+  showIndicatorForVisibleEnemies: 0
+  enemyTag: Enemy
+  player: {fileID: 1705921059}
+  targetCanvas: {fileID: 1707579242}
+--- !u!4 &1183173353
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1183173351}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1273478470
 GameObject:
   m_ObjectHideFlags: 0
@@ -1377,6 +1427,11 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!223 &1707579242 stripped
+Canvas:
+  m_CorrespondingSourceObject: {fileID: 1104812266439391771, guid: a04bac898aeeb1a4e86324d6cd1e8103, type: 3}
+  m_PrefabInstance: {fileID: 1767319078}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1744122484
 GameObject:
   m_ObjectHideFlags: 0
@@ -79419,3 +79474,4 @@ SceneRoots:
   - {fileID: 1767319078}
   - {fileID: 5540805575103150566}
   - {fileID: 227936167}
+  - {fileID: 1183173353}

@@ -21,7 +21,7 @@ public class PlayerStats : MonoBehaviour
     // Property to get actual stats
     public float ActualMoveSpeed => moveSpeed * moveSpeedModifier;
     public float ActualAttackSpeed => attackSpeed * attackSpeedModifier;
-    public float ActualAttackDamage => attackDamage * attackDamageModifier;
+    public float ActualAttackDamage => attackDamage + attackDamageModifier;
     public float ActualMaxHealth => maxHealth * maxHealthModifier;
     
     private void Awake()

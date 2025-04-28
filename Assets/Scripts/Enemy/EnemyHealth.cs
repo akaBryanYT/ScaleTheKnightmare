@@ -1,8 +1,11 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyHealth : MonoBehaviour
 {
+	[SerializeField] public List<GameObject> items = new List<GameObject>(); // List of possible items
     [SerializeField] private int maxHealth = 2;
     [SerializeField] private float knockbackForce = 5f;
     
@@ -79,6 +82,36 @@ public class EnemyHealth : MonoBehaviour
         
         // Invoke the death event
         OnEnemyDeath?.Invoke();
+		
+		// Spawn item at enemy's location
+        if(UnityEngine.Random.Range(0, 100) < 50){
+            if (items.Count > 0)
+            {
+                // Choose a random item from the list
+                GameObject itemToSpawn = items[UnityEngine.Random.Range(0, items.Count)];
+
+                // Instantiate the item at the enemy's position (transform.position)
+                GameObject item = Instantiate(itemToSpawn, transform.position, Quaternion.identity); // Quaternion.identity for default rotation
+
+                // Check if item has Rigidbody2D component
+                Rigidbody2D itemRb = item.GetComponent<Rigidbody2D>();
+
+                if (itemRb != null)
+                {
+                    // Apply a random force to the item to make it fly
+                    // Random direction for flight (horizontal and vertical)
+                    Vector2 randomDirection = new Vector2(UnityEngine.Random.Range(-1f, 1f), UnityEngine.Random.Range(1f, 2f)); // Horizontal & upward
+                    float randomForce = UnityEngine.Random.Range(5f, 10f); // Random force magnitude
+
+                    // Apply the force to the Rigidbody2D
+                    itemRb.AddForce(randomDirection.normalized * randomForce, ForceMode2D.Impulse);
+                }
+                else
+                {
+                    Debug.LogWarning("Item does not have Rigidbody2D component!");
+                }
+            }
+        }
         
         // Destroy after animation plays
         Destroy(gameObject, 1f);

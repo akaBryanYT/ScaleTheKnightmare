@@ -328,6 +328,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 223e246e4792caf42a911c125fdd4e74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  items:
+  - {fileID: 5853821512452632667, guid: 78e164724307c6a4e9738dbff0cc45c7, type: 3}
+  - {fileID: 5853821512452632667, guid: 930343ea11b59e84ba416fed2821caaf, type: 3}
+  - {fileID: 5853821512452632667, guid: a397434ea0b68b64994802914684da6b, type: 3}
   maxHealth: 3
   knockbackForce: 3
 --- !u!114 &-7653190769044011815
@@ -369,6 +373,7 @@ MonoBehaviour:
   areaAttackRadius: 1.5
   areaAttackDamage: 2
   areaAttackCooldown: 5
+  hasProjectileAttack: 0
   projectileSpawnPoint: {fileID: 0}
   projectilePrefab: {fileID: 0}
   projectileSpeed: 15

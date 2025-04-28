@@ -6,7 +6,7 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private Transform attackPoint;
     [SerializeField] private float attackRange = 0.5f;
     [SerializeField] private LayerMask enemyLayers;
-    [SerializeField] private int attackDamage = 1;
+    [SerializeField] public int attackDamage = 1;
     [SerializeField] private float attackCooldown = 0.0f;  // Shorter cooldown
     
     [Header("Attack Speed")]
@@ -22,11 +22,13 @@ public class PlayerCombat : MonoBehaviour
     private PlayerMovement playerMovement;
     private bool isPerformingAttack = false;
     private bool hasDamageOccurred = false;
+    private Camera mainCamera;
     
     private void Awake()
     {
         animator = GetComponent<Animator>();
         playerMovement = GetComponent<PlayerMovement>();
+        mainCamera = Camera.main;
     }
     
     private void Update()
@@ -117,28 +119,31 @@ public class PlayerCombat : MonoBehaviour
     {
         Debug.Log("Arrow firing function called");
         
-        if (arrowPrefab == null) return;
+        if (arrowPrefab == null || mainCamera == null) return;
+        
+        // Get mouse position in screen space
+        Vector3 mousePos = Input.mousePosition;
+        
+        // Convert to world position
+        Vector3 worldMousePos = mainCamera.ScreenToWorldPoint(
+            new Vector3(mousePos.x, mousePos.y, -mainCamera.transform.position.z));
+        
+        // Calculate direction to mouse cursor
+        Vector2 direction = (worldMousePos - attackPoint.position).normalized;
         
         // Create arrow
         GameObject arrow = Instantiate(arrowPrefab, attackPoint.position, Quaternion.identity);
-        
-        // Use current direction
-        float direction = transform.localScale.x > 0 ? 1f : -1f;
         
         // Set arrow properties
         Rigidbody2D arrowRb = arrow.GetComponent<Rigidbody2D>();
         if (arrowRb != null)
         {
-            arrowRb.linearVelocity = new Vector2(direction * arrowSpeed, 0);
+            // Set velocity toward cursor
+            arrowRb.linearVelocity = direction * arrowSpeed;
             
             // Make arrow face the correct direction
-            Vector3 currentScale = arrow.transform.localScale;
-            if (direction < 0)
-            {
-                arrow.transform.localScale = new Vector3(-Mathf.Abs(currentScale.x), 
-                                                      currentScale.y, 
-                                                      currentScale.z);
-            }
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            arrow.transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
         }
         
         // Mark damage as occurred and set cooldown
