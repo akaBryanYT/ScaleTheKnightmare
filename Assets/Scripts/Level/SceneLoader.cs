@@ -55,6 +55,8 @@ public class SceneLoader : MonoBehaviour
     {
         // Dynamically reconnect buttons in the new scene
         FindAndSetupButtons();
+
+        LoadPlayerStats();
     }
 
     private void FindAndSetupButtons()
@@ -86,6 +88,9 @@ public class SceneLoader : MonoBehaviour
 
     public void playButtonClicked()
     {
+        // Save player stats before loading new level
+        SavePlayerStats();
+
         // Reset time scale
         Time.timeScale = 1f;
 
@@ -195,6 +200,34 @@ public class SceneLoader : MonoBehaviour
         if (Instance != null)
         {
             Instance.StartLevelCompleteSequence();
+        }
+    }
+
+    private void SavePlayerStats()
+    {
+        var player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            var playerStats = player.GetComponent<PlayerStats>();
+            if (playerStats != null)
+            {
+                playerStats.SaveStatsToPlayerData();
+                Debug.Log("Saved modifiers only.");
+            }
+        }
+    }
+
+    private void LoadPlayerStats()
+    {
+        var player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            var playerStats = player.GetComponent<PlayerStats>();
+            if (playerStats != null)
+            {
+                playerStats.LoadStatsFromPlayerData();
+                Debug.Log("Loaded modifiers into player.");
+            }
         }
     }
 }

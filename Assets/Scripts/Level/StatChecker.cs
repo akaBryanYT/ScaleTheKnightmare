@@ -85,11 +85,12 @@ public class StatChecker : MonoBehaviour
         
         // Max Health
         statsInfo += $"<color=#FF0000>Max Health:</color> {playerStats.ActualMaxHealth:F0}";
-        
-        // Show modifier if it's not 1x
-        if (playerStats.maxHealthModifier != 1f)
+
+        // Show modifier if it's not 0
+        float extraHealth = (playerStats.maxHealthModifier - 1f);
+        if (extraHealth != 0)
         {
-            statsInfo += $" <color=#00FF00>(+{(playerStats.maxHealthModifier - 1) * 100:F0}%)</color>";
+            statsInfo += $" <color=#00FF00>(+{extraHealth:F0} HP)</color>";
         }
         
         // Update the TMP text

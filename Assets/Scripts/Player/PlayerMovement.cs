@@ -75,6 +75,12 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * 0.5f);
         }
+
+        //Toggle Speed
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            GetComponent<PlayerStats>().ToggleSpeedBoost();
+        }
         
         // Better feeling jump physics
         BetterJumpPhysics();

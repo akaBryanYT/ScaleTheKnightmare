@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemName: Health Boost
   icon: {fileID: 4456443523020135713, guid: 59cd819ec277fd34e9f2321615f7f445, type: 3}
-  description: Increases health by 20%
+  description: Increases health by 1
   moveSpeedBonus: 0
   attackSpeedBonus: 0
   attackDamageBonus: 0
