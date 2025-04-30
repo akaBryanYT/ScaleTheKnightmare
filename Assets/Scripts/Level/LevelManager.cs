@@ -227,9 +227,6 @@ public class LevelManager : MonoBehaviour
         else
         {
             Debug.LogWarning("Next level portal is not assigned in LevelManager!");
-            
-            // Fallback - call the level complete event directly
-            SceneLoader.OnLevelComplete();
         }
     }
 }
