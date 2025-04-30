@@ -5,11 +5,12 @@ using UnityEngine;
 
 public class EnemyHealth : MonoBehaviour
 {
-	[SerializeField] public List<GameObject> items = new List<GameObject>(); // List of possible items
-    [SerializeField] private int maxHealth = 2;
+    [SerializeField] public List<GameObject> items = new List<GameObject>(); // List of possible items
+    [SerializeField] private int baseMaxHealth = 2; // Renamed to baseMaxHealth
     [SerializeField] private float knockbackForce = 5f;
     
     private int currentHealth;
+    private int scaledMaxHealth; // New variable for scaled health
     private Animator animator;
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
@@ -19,10 +20,22 @@ public class EnemyHealth : MonoBehaviour
     
     private void Awake()
     {
-        currentHealth = maxHealth;
         animator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+    
+    private void Start()
+    {
+        // Calculate scaled max health
+        scaledMaxHealth = Mathf.RoundToInt(baseMaxHealth * GameProgressionData.enemyHealthMultiplier);
+        currentHealth = scaledMaxHealth;
+        
+        // Log the scaling for debugging
+        if (GameProgressionData.progressionLevel > 0)
+        {
+            Debug.Log($"Enemy scaled: Base HP {baseMaxHealth} → Current HP {scaledMaxHealth}");
+        }
     }
     
     public void TakeDamage(int damage)
@@ -30,8 +43,8 @@ public class EnemyHealth : MonoBehaviour
         currentHealth -= damage;
         
         // Play hurt animation
-        animator.SetBool("isHurt", true);
-        Invoke("ResetHurtTrigger", 0.1f);
+		animator.SetBool("isHurt", true);
+		Invoke("ResetHurtTrigger", 0.1f);
         
         // Flash the sprite
         StartCoroutine(FlashCoroutine());
@@ -82,8 +95,8 @@ public class EnemyHealth : MonoBehaviour
         
         // Invoke the death event
         OnEnemyDeath?.Invoke();
-		
-		// Spawn item at enemy's location
+        
+        // Spawn item at enemy's location
         if(UnityEngine.Random.Range(0, 100) < 50){
             if (items.Count > 0)
             {

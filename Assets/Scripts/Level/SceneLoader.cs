@@ -12,6 +12,9 @@ public class SceneLoader : MonoBehaviour
     [SerializeField] private TextMeshProUGUI countdownText;
     [SerializeField] private bool loadRandomLevelNext = true;
 
+    [Header("UI Elements")]
+    [SerializeField] private TextMeshProUGUI progressionLevelText;
+
     // References for buttons
     private Button playButton;
     private Button exitButton;
@@ -56,6 +59,10 @@ public class SceneLoader : MonoBehaviour
         // Dynamically reconnect buttons in the new scene
         FindAndSetupButtons();
 
+        // Update UI to show current progression level
+        UpdateProgressionUI();
+
+        // Load player stats
         LoadPlayerStats();
     }
 
@@ -86,8 +93,43 @@ public class SceneLoader : MonoBehaviour
         }
     }
 
+    private void UpdateProgressionUI()
+    {
+        // Find progression level text if it exists in the scene
+        if (progressionLevelText == null)
+        {
+            progressionLevelText = GameObject.Find("ProgressionLevel")?.GetComponent<TextMeshProUGUI>();
+        }
+
+        // Update UI with current progression level if available
+        if (progressionLevelText != null)
+        {
+            progressionLevelText.text = $"Current Run: Level {GameProgressionData.progressionLevel}";
+            
+            // Color code based on difficulty
+            if (GameProgressionData.progressionLevel >= 5)
+            {
+                progressionLevelText.color = new Color(1f, 0.5f, 0f); // Orange for hard
+            }
+            else if (GameProgressionData.progressionLevel >= 2)
+            {
+                progressionLevelText.color = new Color(1f, 1f, 0f); // Yellow for medium
+            }
+            else
+            {
+                progressionLevelText.color = new Color(0f, 1f, 0f); // Green for easy
+            }
+        }
+    }
+
     public void playButtonClicked()
     {
+        // Reset progression when starting a new game from main menu
+        if (SceneManager.GetActiveScene().name == "Main Menu")
+        {
+            GameProgressionData.ResetProgression();
+        }
+        
         // Save player stats before loading new level
         SavePlayerStats();
 
@@ -172,10 +214,20 @@ public class SceneLoader : MonoBehaviour
 
     public void LoadNextLevel()
     {
+        // Increase progression level for next level
+        GameProgressionData.IncreaseProgression();
+        
+        // Update UI to show new progression level
+        UpdateProgressionUI();
+        
         if (loadRandomLevelNext)
         {
             // Load a random level
-            playButtonClicked();
+            int numlevel = rngLevel();
+            string level = $"Level{numlevel}";
+            
+            // Load the level
+            SceneManager.LoadScene(level);
         }
         else
         {
