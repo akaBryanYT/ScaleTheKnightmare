@@ -11,19 +11,22 @@ public class BossAI : MonoBehaviour
     [SerializeField] private float maxFollowDistance = 15f;
     [SerializeField] private float jumpCooldown = 1f;
     [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private float platformDetectionDistance = 3f; // Added for better platform detection
+    [SerializeField] private float platformDetectionDistance = 3f;
     
     [Header("Advanced Movement")]
-    [SerializeField] private float ledgeDetectionDistance = 1.5f; // Distance to check for ledges
-    [SerializeField] private float obstacleAvoidanceDistance = 1f; // Distance to check for obstacles
-    [SerializeField] private float unstuckCheckInterval = 2f; // How often to check if stuck
-    [SerializeField] private float minDistanceToMove = 0.1f; // Minimum movement to not be considered stuck
-    [SerializeField] private float platformJumpThreshold = 2.5f; // Height difference that requires platforming
-    [SerializeField] private float highLedgeJumpForceMultiplier = 1.5f; // Jump higher for tall platforms
+    [SerializeField] private float ledgeDetectionDistance = 1.5f;
+    [SerializeField] private float obstacleAvoidanceDistance = 1f;
+    [SerializeField] private float unstuckCheckInterval = 2f;
+    [SerializeField] private float minDistanceToMove = 0.1f;
+    [SerializeField] private float platformJumpThreshold = 2.5f;
+    [SerializeField] private float highLedgeJumpForceMultiplier = 1.5f;
+    [SerializeField] private float teleportRangeFar = 15f; // Added: Distance considered "far"
+    [SerializeField] private float teleportRangeClose = 5f; // Added: Distance for close teleport
     
     [Header("Attack Properties")]
     [SerializeField] private LayerMask playerLayer;
     [SerializeField] private float generalAttackCooldown = 1.5f;
+    [SerializeField] private bool forceAttackVariety = true; // Added: Force attack variety
     
     [Header("Light Attack")]
     [SerializeField] private Transform lightAttackPoint;
@@ -58,8 +61,9 @@ public class BossAI : MonoBehaviour
     [SerializeField] private float projectileSpreadAngle = 15f;
     
     // State tracking
-    private enum BossState { Idle, Chasing, Jumping, Phasing, Attacking, PlatformNavigating, Unstucking }
+    private enum BossState { Idle, Chasing, Jumping, Phasing, Attacking, PlatformNavigating, Unstucking, Teleporting }
     private BossState currentState = BossState.Idle;
+    private BossState previousState = BossState.Idle; // Added: Track previous state
     
     // Component references
     private Rigidbody2D rb;
@@ -74,6 +78,11 @@ public class BossAI : MonoBehaviour
     private float nextProjectileTime = 0f;
     private float nextJumpTime = 0f;
     private float nextGeneralAttackTime = 0f;
+    private float nextTeleportTime = 0f; // Added: Teleport cooldown
+    
+    // Attack variety tracking
+    private int lastAttackType = -1; // Added: Track last attack type used
+    private int consecutiveSameAttacks = 0; // Added: Count of same attack used consecutively
     
     // Platform phasing
     private PlatformEffector2D currentPlatform;
@@ -92,6 +101,7 @@ public class BossAI : MonoBehaviour
     private float unstuckCheckTimer = 0f;
     private bool isCheckingIfStuck = false;
     private bool potentiallyStuck = false;
+    private int unstuckAttempts = 0; // Added: Count unstuck attempts
     
     // Platforming
     private bool targetPlatformFound = false;
@@ -103,6 +113,10 @@ public class BossAI : MonoBehaviour
     
     // Improved pathfinding
     private List<Transform> platformsInScene = new List<Transform>();
+    private List<Transform> visitedPlatforms = new List<Transform>(); // Added: Track visited platforms
+    
+    // Animation state tracking
+    private bool isAnimationTransitioning = false; // Added: Track animation transitions
     
     private void Awake()
     {
@@ -179,6 +193,10 @@ public class BossAI : MonoBehaviour
             if (player == null) return;
         }
         
+        // Skip other logic during teleporting
+        if (currentState == BossState.Teleporting)
+            return;
+            
         // Record position history for movement analysis
         RecordPositionHistory();
         
@@ -188,7 +206,9 @@ public class BossAI : MonoBehaviour
         float directDistance = Vector2.Distance(transform.position, player.position);
         
         // Face the player (only when not navigating platforms)
-        if (currentState != BossState.PlatformNavigating)
+        if (currentState != BossState.PlatformNavigating && 
+            currentState != BossState.Attacking && 
+            currentState != BossState.Teleporting)
         {
             FacePlayer();
         }
@@ -199,15 +219,19 @@ public class BossAI : MonoBehaviour
             return;
         }
         
-        // Determine appropriate action based on player position
-        if (directDistance > maxFollowDistance)
+        // NEW: Add vertical distance component to determine if teleportation is needed
+        float verticalDistanceAbs = Mathf.Abs(verticalDistance);
+        bool isPlayerTooFar = directDistance > maxFollowDistance || verticalDistanceAbs > 5f;
+        
+        // NEW: Smart teleportation when player is too far away or on a different floor
+        if (isPlayerTooFar && Time.time > nextTeleportTime)
         {
-            // Player is too far away, try to close the gap
-            TeleportCloserToPlayer();
+            // Try to teleport close to player
+            TeleportSmartly(verticalDistance, horizontalDistance);
             return;
         }
         
-        // First, check if we need to navigate complex platforms (added this logic)
+        // First, check if we need to navigate complex platforms
         if (NeedToPlatform(verticalDistance, horizontalDistance))
         {
             NavigatePlatforms();
@@ -235,34 +259,10 @@ public class BossAI : MonoBehaviour
             return;
         }
         
-        // Attempt attacks based on distance
+        // NEW: Improved attack selection with variety
         if (Time.time > nextGeneralAttackTime)
         {
-            bool attackPerformed = false;
-            
-            // In close range - try light or heavy attacks
-            if (horizontalDistance <= lightAttackDistance && Time.time > nextLightAttackTime)
-            {
-                PerformLightAttack();
-                attackPerformed = true;
-            }
-            else if (horizontalDistance <= heavyAttackDistance && Time.time > nextHeavyAttackTime)
-            {
-                PerformHeavyAttack();
-                attackPerformed = true;
-            }
-            // Medium range - try area attack
-            else if (directDistance <= areaAttackRadius && Time.time > nextAreaAttackTime)
-            {
-                PerformAreaAttack();
-                attackPerformed = true;
-            }
-            // Long range - try projectile attack
-            else if (hasProjectileAttack && directDistance >= minProjectileRange && directDistance <= maxProjectileRange && Time.time > nextProjectileTime)
-            {
-                PerformProjectileAttack();
-                attackPerformed = true;
-            }
+            bool attackPerformed = AttemptAttackWithVariety(horizontalDistance, directDistance);
             
             if (attackPerformed)
             {
@@ -273,6 +273,84 @@ public class BossAI : MonoBehaviour
         
         // If we haven't attacked or jumped, chase the player
         ChasePlayer();
+    }
+    
+    // NEW: Method to force attack variety
+    private bool AttemptAttackWithVariety(float horizontalDistance, float directDistance)
+    {
+        // Create an array of available attacks
+        List<int> availableAttacks = new List<int>();
+        
+        // Check each attack's availability and range requirements
+        // Light attack (type 0)
+        if (Time.time > nextLightAttackTime && horizontalDistance <= lightAttackDistance)
+        {
+            availableAttacks.Add(0);
+        }
+        
+        // Heavy attack (type 1)
+        if (Time.time > nextHeavyAttackTime && horizontalDistance <= heavyAttackDistance)
+        {
+            availableAttacks.Add(1);
+        }
+        
+        // Area attack (type 2)
+        if (Time.time > nextAreaAttackTime && directDistance <= areaAttackRadius)
+        {
+            availableAttacks.Add(2);
+        }
+        
+        // Projectile attack (type 3)
+        if (hasProjectileAttack && Time.time > nextProjectileTime && 
+            directDistance >= minProjectileRange && directDistance <= maxProjectileRange)
+        {
+            availableAttacks.Add(3);
+        }
+        
+        // If no attacks available, return false
+        if (availableAttacks.Count == 0)
+            return false;
+            
+        // If we have multiple attacks available and want variety, avoid using the same attack repeatedly
+        if (availableAttacks.Count > 1 && forceAttackVariety && consecutiveSameAttacks >= 2)
+        {
+            // Remove last attack type from options to force variety
+            availableAttacks.Remove(lastAttackType);
+        }
+        
+        // Choose a random attack from available options
+        int attackIndex = Random.Range(0, availableAttacks.Count);
+        int attackType = availableAttacks[attackIndex];
+        
+        // Track attack variety
+        if (attackType == lastAttackType)
+        {
+            consecutiveSameAttacks++;
+        }
+        else
+        {
+            consecutiveSameAttacks = 0;
+            lastAttackType = attackType;
+        }
+        
+        // Perform the selected attack
+        switch (attackType)
+        {
+            case 0:
+                PerformLightAttack();
+                break;
+            case 1:
+                PerformHeavyAttack();
+                break;
+            case 2:
+                PerformAreaAttack();
+                break;
+            case 3:
+                PerformProjectileAttack();
+                break;
+        }
+        
+        return true;
     }
     
     #region Advanced Movement
@@ -310,6 +388,132 @@ public class BossAI : MonoBehaviour
         }
         
         Debug.Log($"Found {platformsInScene.Count} platforms for boss navigation");
+    }
+    
+    // NEW: Improved teleportation that's smarter about where to go
+    private void TeleportSmartly(float verticalDistance, float horizontalDistance)
+    {
+        SetState(BossState.Teleporting);
+        
+        // Play teleport effect/animation
+        animator.SetTrigger("teleport");
+        
+        Vector3 targetPosition;
+        bool teleportedToFloor = false;
+        
+        // First check: Is player on a different floor?
+        if (Mathf.Abs(verticalDistance) > 4f)
+        {
+            // Try to find a platform near the player's height
+            Transform closestPlatform = FindPlatformNearPlayerHeight();
+            
+            if (closestPlatform != null)
+            {
+                // Teleport to platform near player's height
+                targetPosition = closestPlatform.position;
+                targetPosition.y += 1f; // Appear above the platform
+                teleportedToFloor = true;
+                
+                Debug.Log("Boss teleporting to platform at player's height level");
+            }
+            else
+            {
+                // If no suitable platform, teleport with offset from player
+                targetPosition = player.position;
+                targetPosition.x += (Random.value > 0.5f ? 3f : -3f); // Random side offset
+                targetPosition.y += 1f; // Appear slightly above the player's level
+                
+                Debug.Log("Boss teleporting near player (no suitable platform found)");
+            }
+        }
+        else
+        {
+            // On the same floor but far horizontally
+            targetPosition = player.position;
+            
+            // Maintain same height but teleport closer horizontally
+            targetPosition.y = transform.position.y;
+            targetPosition.x = player.position.x + (Random.value > 0.5f ? 3f : -3f); // Random side offset
+            
+            Debug.Log("Boss teleporting closer to player horizontally");
+        }
+        
+        // Check if the target position is valid (not inside terrain)
+        Collider2D overlap = Physics2D.OverlapCircle(targetPosition, 1f, groundLayer);
+        if (overlap != null)
+        {
+            // Adjust position upward if we're inside terrain
+            targetPosition.y += 2f;
+            Debug.Log("Adjusted teleport position upward to avoid terrain overlap");
+        }
+        
+        // Teleport with a slight delay
+        StartCoroutine(DelayedTeleport(targetPosition));
+        
+        // Set cooldown - shorter for floor-to-floor teleports to be more aggressive
+        nextTeleportTime = Time.time + (teleportedToFloor ? 3f : 5f);
+    }
+    
+    private IEnumerator DelayedTeleport(Vector3 targetPosition)
+    {
+        // Teleport effect start - could fade out sprite
+        SpriteRenderer sprite = GetComponent<SpriteRenderer>();
+        if (sprite != null)
+        {
+            Color originalColor = sprite.color;
+            sprite.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0.5f);
+        }
+        
+        yield return new WaitForSeconds(0.2f);
+        
+        // Perform teleport
+        transform.position = targetPosition;
+        
+        // Face the player after teleport
+        FacePlayer();
+        
+        // Reset unstuck detection after teleport
+        lastPosition = targetPosition;
+        potentiallyStuck = false;
+        
+        // Teleport effect end - fade back in
+        if (sprite != null)
+        {
+            Color originalColor = sprite.color;
+            sprite.color = new Color(originalColor.r, originalColor.g, originalColor.b, 1f);
+        }
+        
+        // Return to normal state
+        SetState(BossState.Idle);
+    }
+    
+    // NEW: Find a platform at similar height to the player
+    private Transform FindPlatformNearPlayerHeight()
+    {
+        Transform bestPlatform = null;
+        float smallestHeightDifference = float.MaxValue;
+        
+        foreach (Transform platform in platformsInScene)
+        {
+            // Skip very distant platforms
+            if (Vector2.Distance(platform.position, player.position) > maxFollowDistance * 1.5f)
+                continue;
+                
+            // Calculate height difference
+            float heightDifference = Mathf.Abs(platform.position.y - player.position.y);
+            
+            // Check horizontal distance to avoid platforms directly above/below the player
+            float horizontalDistance = Mathf.Abs(platform.position.x - player.position.x);
+            
+            // Prefer platforms that are at similar height but not too close horizontally
+            if (heightDifference < 3f && horizontalDistance > 2f && heightDifference < smallestHeightDifference)
+            {
+                smallestHeightDifference = heightDifference;
+                bestPlatform = platform;
+            }
+        }
+        
+        return bestPlatform;
     }
     
     private bool NeedToPlatform(float verticalDistance, float horizontalDistance)
@@ -364,8 +568,15 @@ public class BossAI : MonoBehaviour
             if (platform.position.y - transform.position.y > jumpForce * 0.25f)
                 continue;
             
+            // Give a slight penalty to recently visited platforms
+            float visitedPenalty = 0f;
+            if (visitedPlatforms.Contains(platform))
+            {
+                visitedPenalty = 10f;
+            }
+            
             // Weight: closer to boss is better, and closer to player is better
-            float score = distanceToBoss * 0.4f + distanceToPlayer * 0.6f;
+            float score = distanceToBoss * 0.4f + distanceToPlayer * 0.6f + visitedPenalty;
             
             // Prefer platforms that bring us closer to the player vertically
             if (transform.position.y < player.position.y && platform.position.y > transform.position.y)
@@ -375,6 +586,18 @@ public class BossAI : MonoBehaviour
             {
                 bestScore = score;
                 bestPlatform = platform;
+            }
+        }
+        
+        // Add the chosen platform to our visited list
+        if (bestPlatform != null && !visitedPlatforms.Contains(bestPlatform))
+        {
+            visitedPlatforms.Add(bestPlatform);
+            
+            // Limit the size of visited platforms list
+            if (visitedPlatforms.Count > 5)
+            {
+                visitedPlatforms.RemoveAt(0);
             }
         }
         
@@ -601,8 +824,10 @@ public class BossAI : MonoBehaviour
             // Wait for the check interval
             yield return new WaitForSeconds(unstuckCheckInterval);
             
-            // Skip if we're attacking or jumping
-            if (currentState == BossState.Attacking || currentState == BossState.Jumping)
+            // Skip if we're attacking, jumping or teleporting
+            if (currentState == BossState.Attacking || 
+                currentState == BossState.Jumping || 
+                currentState == BossState.Teleporting)
             {
                 continue;
             }
@@ -618,9 +843,9 @@ public class BossAI : MonoBehaviour
                     potentiallyStuck = true;
                     stuckTimer = Time.time;
                 }
-                else if (Time.time - stuckTimer > 3f)
+                else if (Time.time - stuckTimer > 2f) // Reduced from 3s to 2s for faster response
                 {
-                    // We've been potentially stuck for 3 seconds
+                    // We've been potentially stuck for 2 seconds
                     // Try to unstuck
                     AttemptToUnstuck();
                     potentiallyStuck = false;
@@ -641,6 +866,8 @@ public class BossAI : MonoBehaviour
     {
         Debug.Log("Boss attempting to unstuck!");
         SetState(BossState.Unstucking);
+        
+        unstuckAttempts++;
         
         // Try different unstucking methods based on the situation
         
@@ -707,9 +934,13 @@ public class BossAI : MonoBehaviour
             // Small random horizontal movement
             float randomDirection = Random.Range(-1f, 1f);
             rb.AddForce(Vector2.right * randomDirection * 5f, ForceMode2D.Impulse);
-            
-            // If all else fails, try teleporting closer to the player after a delay
+        }
+        
+        // If we've been stuck multiple times, teleport after a short delay
+        if (unstuckAttempts >= 2)
+        {
             StartCoroutine(TeleportIfStillStuck());
+            unstuckAttempts = 0;
         }
         
         // Return to normal state after a delay
@@ -725,32 +956,20 @@ public class BossAI : MonoBehaviour
     private IEnumerator TeleportIfStillStuck()
     {
         // Give the previous unstuck attempt some time to work
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(1.5f); // Reduced from 2s to 1.5s
         
         // Check if we're still potentially stuck
         if (currentState == BossState.Unstucking)
         {
-            // Try teleporting to a better position
-            Vector2 direction = ((Vector2)player.position - (Vector2)transform.position).normalized;
-            Vector2 teleportPosition = (Vector2)transform.position + direction * 5f;
+            Debug.Log("Boss teleporting to escape stuck state");
             
-            // Adjust height to be a bit above ground
-            teleportPosition.y += 1f;
+            // Try teleporting closer to the player's position
+            TeleportSmartly(player.position.y - transform.position.y, 
+                           Mathf.Abs(player.position.x - transform.position.x));
             
-            // Check if the position is valid (not inside terrain)
-            Collider2D overlap = Physics2D.OverlapCircle(teleportPosition, 1f, groundLayer);
-            if (overlap == null)
-            {
-                // Play teleport effect/animation
-                animator.SetTrigger("teleport");
-                
-                // Move to the new position
-                transform.position = teleportPosition;
-                
-                // Reset our stuck detection
-                lastPosition = teleportPosition;
-                potentiallyStuck = false;
-            }
+            // Reset our stuck detection
+            potentiallyStuck = false;
+            unstuckAttempts = 0;
         }
     }
     
@@ -815,28 +1034,9 @@ public class BossAI : MonoBehaviour
             // Re-enable collisions
             Physics2D.IgnoreCollision(physicsCollider, hit.collider, false);
             isPhasing = false;
-        }
-    }
-    
-    private void TeleportCloserToPlayer()
-    {
-        // Find a safe position closer to the player
-        Vector2 direction = ((Vector2)player.position - (Vector2)transform.position).normalized;
-        Vector2 teleportPosition = (Vector2)transform.position + direction * 8f;
-        
-        // Check if the position is valid (not inside terrain)
-        Collider2D overlap = Physics2D.OverlapCircle(teleportPosition, 1f, groundLayer);
-        if (overlap == null)
-        {
-            // Play teleport effect/animation
-            animator.SetTrigger("teleport");
             
-            // Move to the new position
-            transform.position = teleportPosition;
-            
-            // Reset our stuck detection
-            lastPosition = teleportPosition;
-            potentiallyStuck = false;
+            // Return to idle
+            SetState(BossState.Idle);
         }
     }
     
@@ -868,11 +1068,18 @@ public class BossAI : MonoBehaviour
         // Stop movement
         rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
         
+        // Face the player before attacking
+        FacePlayer();
+        
         // Play animation
+        animator.ResetTrigger("lightAttack"); // NEW: Reset before setting
         animator.SetTrigger("lightAttack");
         
         // Set cooldown
         nextLightAttackTime = Time.time + lightAttackCooldown;
+        
+        // Ensure attack ends - failsafe
+        StartCoroutine(EndAttackAfterDelay(0.6f)); // NEW: Failsafe timer
     }
     
     private void PerformHeavyAttack()
@@ -882,11 +1089,18 @@ public class BossAI : MonoBehaviour
         // Stop movement
         rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
         
+        // Face the player before attacking
+        FacePlayer();
+        
         // Play animation
+        animator.ResetTrigger("heavyAttack"); // NEW: Reset before setting
         animator.SetTrigger("heavyAttack");
         
         // Set cooldown
         nextHeavyAttackTime = Time.time + heavyAttackCooldown;
+        
+        // Ensure attack ends - failsafe
+        StartCoroutine(EndAttackAfterDelay(0.8f)); // NEW: Failsafe timer
     }
     
     private void PerformAreaAttack()
@@ -897,6 +1111,7 @@ public class BossAI : MonoBehaviour
         rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
         
         // Play animation
+        animator.ResetTrigger("areaAttack"); // NEW: Reset before setting
         animator.SetTrigger("areaAttack");
         
         // Set cooldown
@@ -909,6 +1124,9 @@ public class BossAI : MonoBehaviour
             indicator.transform.localScale = new Vector3(areaAttackRadius * 2, areaAttackRadius * 2, 1);
             Destroy(indicator, 0.5f);
         }
+        
+        // Ensure attack ends - failsafe
+        StartCoroutine(EndAttackAfterDelay(1.0f)); // NEW: Failsafe timer
     }
     
     private void PerformProjectileAttack()
@@ -918,11 +1136,30 @@ public class BossAI : MonoBehaviour
         // Stop movement
         rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
         
+        // Face the player before attacking
+        FacePlayer();
+        
         // Play animation
+        animator.ResetTrigger("projectileAttack"); // NEW: Reset before setting
         animator.SetTrigger("projectileAttack");
         
         // Set cooldown
         nextProjectileTime = Time.time + projectileCooldown;
+        
+        // Ensure attack ends - failsafe
+        StartCoroutine(EndAttackAfterDelay(0.7f)); // NEW: Failsafe timer
+    }
+    
+    // NEW: Failsafe to ensure attack state ends
+    private IEnumerator EndAttackAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        // If we're still in attacking state, force end it
+        if (currentState == BossState.Attacking)
+        {
+            EndAttackState();
+        }
     }
     
     private void DealLightAttackDamage()
@@ -1079,12 +1316,20 @@ public class BossAI : MonoBehaviour
     
     private void SetState(BossState newState)
     {
+        // Skip if we're already in this state
+        if (currentState == newState) return;
+        
+        // Save previous state
+        previousState = currentState;
         currentState = newState;
         
         // Update animator parameters
         animator.SetBool("isAttacking", newState == BossState.Attacking);
         animator.SetBool("isJumping", newState == BossState.Jumping);
         animator.SetBool("isPhasing", newState == BossState.Phasing);
+        
+        // Debug log state transitions
+        Debug.Log($"Boss state changed: {previousState} -> {currentState}");
     }
     
     // Visualize attack ranges in editor
