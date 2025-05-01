@@ -11,6 +11,7 @@ public class SceneLoader : MonoBehaviour
     [SerializeField] private GameObject levelCompleteUI;
     [SerializeField] private TextMeshProUGUI countdownText;
     [SerializeField] private bool loadRandomLevelNext = true;
+    [SerializeField] private string mainMenuSceneName = "Main Menu"; // Added this line
 
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI progressionLevelText;
@@ -120,6 +121,21 @@ public class SceneLoader : MonoBehaviour
                 progressionLevelText.color = new Color(0f, 1f, 0f); // Green for easy
             }
         }
+    }
+
+    // Added method for loading the main menu
+    public void LoadMainMenu()
+    {
+        // Reset time scale
+        Time.timeScale = 1f;
+        
+        // Reset progression when returning to main menu
+        GameProgressionData.ResetProgression();
+        
+        // Load main menu
+        SceneManager.LoadScene(mainMenuSceneName);
+        
+        Debug.Log("Returning to main menu");
     }
 
     public void playButtonClicked()
