@@ -4,8 +4,8 @@ using UnityEngine.SceneManagement;
 
 public class PlayerHealth : MonoBehaviour
 {
-	public HealthBar healthBar;
-	
+    public HealthBar healthBar;
+    
     [SerializeField] public int maxHealth = 3;
     [SerializeField] private float invincibilityDuration = 1f;
     [SerializeField] private float deathDelay = 2f;
@@ -29,7 +29,7 @@ public class PlayerHealth : MonoBehaviour
         if (isInvincible || isDead) return;
         
         currentHealth -= amount;
-		healthBar.SetHealth(currentHealth);
+        healthBar.SetHealth(currentHealth);
         Debug.Log("Player took damage! Health: " + currentHealth + "/" + maxHealth);
         
         if (currentHealth <= 0)
@@ -67,7 +67,7 @@ public class PlayerHealth : MonoBehaviour
     {
         if (isDead) return; // Prevent multiple death calls
         
-        Debug.Log("Player died! Restarting level after delay...");
+        Debug.Log("Player died! Returning to main menu after delay...");
         isDead = true;
         
         // Disable player movement
@@ -90,26 +90,39 @@ public class PlayerHealth : MonoBehaviour
         // Play death animation
         animator.SetTrigger("isDead");
         
-        // Restart level after delay
-        StartCoroutine(RestartAfterDelay());
+        // Return to main menu after delay
+        StartCoroutine(ReturnToMainMenuAfterDelay());
     }
     
-    private IEnumerator RestartAfterDelay()
+    private IEnumerator ReturnToMainMenuAfterDelay()
     {
         // Wait for death animation to play
         yield return new WaitForSeconds(deathDelay);
         
-        Debug.Log("Restarting level now!");
-        RestartLevel();
+        Debug.Log("Returning to main menu now!");
+        ReturnToMainMenu();
     }
     
-    private void RestartLevel()
+    private void ReturnToMainMenu()
     {
-        // Make sure the current scene is in build settings
-        string currentSceneName = SceneManager.GetActiveScene().name;
-        Debug.Log("Attempting to reload scene: " + currentSceneName);
+        // Reset all progression data
+        GameProgressionData.ResetProgression();
         
-        // Reload the current scene
-        SceneManager.LoadScene(currentSceneName);
+        // Reset player stat modifiers
+        PlayerData.moveSpeedModifier = 1f;
+        PlayerData.attackSpeedModifier = 1f;
+        PlayerData.attackDamageModifier = 1f;
+        PlayerData.maxHealthModifier = 1f;
+        
+        // Use SceneLoader if available
+        if (SceneLoader.Instance != null)
+        {
+            SceneLoader.Instance.LoadMainMenu();
+        }
+        else
+        {
+            // Fallback direct method if SceneLoader is not available
+            SceneManager.LoadScene("Main Menu");
+        }
     }
 }

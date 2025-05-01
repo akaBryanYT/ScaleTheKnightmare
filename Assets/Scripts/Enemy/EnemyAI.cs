@@ -363,7 +363,15 @@ public class EnemyAI : MonoBehaviour
             PlayerHealth playerHealth = hitPlayer.GetComponent<PlayerHealth>();
             if (playerHealth != null)
             {
-                playerHealth.TakeDamage(lightAttackDamage);
+                // Apply damage scaling
+                int scaledDamage = Mathf.RoundToInt(lightAttackDamage * GameProgressionData.enemyDamageMultiplier);
+                playerHealth.TakeDamage(scaledDamage);
+                
+                // Debug log scaled damage
+                if (GameProgressionData.progressionLevel > 0)
+                {
+                    Debug.Log($"Enemy light attack scaled: {lightAttackDamage} → {scaledDamage} damage");
+                }
             }
         }
     }
@@ -377,7 +385,9 @@ public class EnemyAI : MonoBehaviour
             PlayerHealth playerHealth = hitPlayer.GetComponent<PlayerHealth>();
             if (playerHealth != null)
             {
-                playerHealth.TakeDamage(heavyAttackDamage);
+                // Apply damage scaling
+                int scaledDamage = Mathf.RoundToInt(heavyAttackDamage * GameProgressionData.enemyDamageMultiplier);
+                playerHealth.TakeDamage(scaledDamage);
                 
                 // Add knockback to player
                 Rigidbody2D playerRb = hitPlayer.GetComponent<Rigidbody2D>();
@@ -385,6 +395,12 @@ public class EnemyAI : MonoBehaviour
                 {
                     Vector2 knockbackDir = (hitPlayer.transform.position - transform.position).normalized;
                     playerRb.AddForce(knockbackDir * 8f, ForceMode2D.Impulse);
+                }
+                
+                // Debug log scaled damage
+                if (GameProgressionData.progressionLevel > 0)
+                {
+                    Debug.Log($"Enemy heavy attack scaled: {heavyAttackDamage} → {scaledDamage} damage");
                 }
             }
         }
@@ -400,7 +416,9 @@ public class EnemyAI : MonoBehaviour
             PlayerHealth playerHealth = player.GetComponent<PlayerHealth>();
             if (playerHealth != null)
             {
-                playerHealth.TakeDamage(areaAttackDamage);
+                // Apply damage scaling
+                int scaledDamage = Mathf.RoundToInt(areaAttackDamage * GameProgressionData.enemyDamageMultiplier);
+                playerHealth.TakeDamage(scaledDamage);
                 
                 // Add small knockback
                 Rigidbody2D playerRb = player.GetComponent<Rigidbody2D>();
@@ -408,6 +426,12 @@ public class EnemyAI : MonoBehaviour
                 {
                     Vector2 knockbackDir = (player.transform.position - transform.position).normalized;
                     playerRb.AddForce(knockbackDir * 5f, ForceMode2D.Impulse);
+                }
+                
+                // Debug log scaled damage
+                if (GameProgressionData.progressionLevel > 0)
+                {
+                    Debug.Log($"Enemy area attack scaled: {areaAttackDamage} → {scaledDamage} damage");
                 }
             }
         }
@@ -436,6 +460,13 @@ public class EnemyAI : MonoBehaviour
             // Set projectile rotation to match direction
             float angle = Mathf.Atan2(directionToPlayer.y, directionToPlayer.x) * Mathf.Rad2Deg;
             projectile.transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+        }
+        
+        // Apply damage scaling to projectile if it has an EnemyProjectile component
+        EnemyProjectile enemyProjectile = projectile.GetComponent<EnemyProjectile>();
+        if (enemyProjectile != null)
+        {
+            enemyProjectile.ApplyDamageScaling(GameProgressionData.enemyDamageMultiplier);
         }
     }
     
